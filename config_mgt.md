@@ -14,4 +14,39 @@ A Jump Server (also referred to as Bastion Host) is an intermediary server throu
 
 In the diagram below the Virtual Private Network (VPC) is divided into two subnets - Public subnet has public IP addresses and Private subnet is only reachable by private IP addresses.
 
-*image archi
+![](https://github.com/Arafly/automate-everything/blob/master/assets/bastion.png)
+
+### Install and configure Ansible on VM
+- You can update the name tag on your Jenkins instance to *Jenkins-Ansible* if you like. As we'll also use this server to run ansible playbooks.
+- Create a new repo on your GitHub and name it whatever is suitable (mine is automate-everything).
+- Install Ansible
+  
+```
+sudo apt update
+
+sudo apt install ansible
+```
+
+Check your Ansible version by running 
+`ansible --version`
+
+```
+Output:
+
+ansible 2.9.6
+  config file = /etc/ansible/ansible.cfg
+  configured module search path = ['/home/araflyayinde/.ansible/plugins/modules', '
+/usr/share/ansible/plugins/modules']
+  ansible python module location = /usr/lib/python3/dist-packages/ansible
+  executable location = /usr/bin/ansible
+```
+
+- Configure Jenkins build job to save your repository content every time you change it. 
+Create a new Freestyle project ansible in Jenkins and point it to your ‘ansible-config-mgt’ repository.
+Configure Webhook in GitHub and set webhook to trigger ansible build.
+Configure a Post-build job to save all (**) files, like you did it in Project 9.
+Test your setup by making some change in README.MD file in master branch and make sure that builds starts automatically and Jenkins saves the files (build artifacts) in following folder
+ls /var/lib/jenkins/jobs/ansible/builds/<build_number>/archive/
+Note: Trigger Jenkins project execution only for /main (master) branch.
+
+Now your setup will look like this:
