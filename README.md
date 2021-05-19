@@ -1,0 +1,1 @@
+## Automae the previous projects with Ansible
