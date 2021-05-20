@@ -41,12 +41,33 @@ ansible 2.9.6
   executable location = /usr/bin/ansible
 ```
 
-- Configure Jenkins build job to save your repository content every time you change it. 
-Create a new Freestyle project ansible in Jenkins and point it to your ‘ansible-config-mgt’ repository.
-Configure Webhook in GitHub and set webhook to trigger ansible build.
-Configure a Post-build job to save all (**) files, like you did it in Project 9.
-Test your setup by making some change in README.MD file in master branch and make sure that builds starts automatically and Jenkins saves the files (build artifacts) in following folder
-ls /var/lib/jenkins/jobs/ansible/builds/<build_number>/archive/
-Note: Trigger Jenkins project execution only for /main (master) branch.
+### Configure Jenkins build job to save your repository content every time you change it. 
 
-Now your setup will look like this:
+- Create a new Freestyle project "ansible" in Jenkins and point it to your repository.
+
+> You can first place in your project name and clone the *tooling* project. Like this:
+
+*image jenkins clone
+*image repo cred
+
+- Configure Webhook in GitHub and set webhook to trigger ansible build.
+- Configure a Post-build job to save all (**) files.
+
+*image third_build
+
+- Test your setup by making some change in README.MD file in master branch and make sure that builds starts automatically and Jenkins saves the files (build artifacts) in following folder:
+  
+`ls /var/lib/jenkins/jobs/ansible/builds/<build_number>/archive/`
+
+```
+$ ls /var/lib/jenkins/jobs/ansible/builds/
+1  2  3  legacyIds  permalinks
+
+$ ls /var/lib/jenkins/jobs/ansible/builds/3
+archive  build.xml  changelog.xml  log  polling.log
+
+$ ls /var/lib/jenkins/jobs/ansible/builds/3/archive/
+README.md  assets  config_mgt.md
+```
+
+Now our setup will look like this:
