@@ -47,8 +47,9 @@ ansible 2.9.6
 
 > You can first place in your project name and clone the *tooling* project. Like this:
 
-*image jenkins clone
-*image repo cred
+![](https://github.com/Arafly/automate-everything/blob/master/assets/jenkins_clone.PNG)
+
+![](https://github.com/Arafly/automate-everything/blob/master/assets/third_build.PNG)
 
 - Configure Webhook in GitHub and set webhook to trigger ansible build.
 - Configure a Post-build job to save all (**) files.
@@ -71,3 +72,5 @@ README.md  assets  config_mgt.md
 ```
 
 Now our setup will look like this:
+
+![](https://github.com/Arafly/automate-everything/blob/master/assets/jenkins_ansible.png)
