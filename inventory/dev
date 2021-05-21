@@ -1,12 +1,12 @@
 [nfs]
-10.154.0.18 ansible_ssh_user='araflyayinde'
+34.105.245.167 ansible_ssh_user='araflyayinde'
 
 [webservers]
-<Web-Server1-Private-IP-Address> ansible_ssh_user='ec2-user'
-<Web-Server2-Private-IP-Address> ansible_ssh_user='ec2-user'
+34.105.163.196 ansible_ssh_user='araflyayinde'
+35.242.128.108 ansible_ssh_user='araflyayinde'
 
 [db]
-<Database-Private-IP-Address> ansible_ssh_user='ec2-user' 
+34.145.122.179 ansible_ssh_user='araflyayinde'
 
 [lb]
-<Load-Balancer-Private-IP-Address> ansible_ssh_user='ubuntu'
+34.105.133.81 ansible_ssh_user='araflyayinde'
