@@ -136,12 +136,62 @@ Update your playbooks/common.yml file with following code:
       state: latest
 ```
 
-Examine the code above and try to make sense out of it. This playbook is divided into two parts, each of them is intended to perform the same task: install wireshark utility (or make sure it is updated to the latest version) on your RHEL 8 and Ubuntu servers. It uses root user to perform this task and respective package manager: yum for RHEL 8 and apt for Ubuntu.
+This playbook is divided into two parts, each of them is intended to perform the same task: install wireshark utility (or make sure it is updated to the latest version) on your Centos8 and Ubuntu servers. It uses root user to perform this task and respective package manager: yum for RHEL 8 and apt for Ubuntu.
 
-Feel free to update this playbook with following tasks:
 
-Create a directory and a file inside it
-Change timezone on all servers
-Run some shell script
-…
-For a better understanding of Ansible playbooks - watch this video from RedHat and read this article.
+### Update GIT with the latest code
+
+Now that we have a separate branch, we'll need to raise a Pull Request (PR), so as to get your branch peer merged to the master branch.
+
+use git commands to add, commit and push your branch to GitHub.
+
+```
+git status
+
+git add <selected files>
+
+git commit -m "commit message"
+```
+- Create a Pull request (PR)
+Wear a hat of another developer for a second, and act as a reviewer. If the reviewer is happy with your new feature development, merge the code to the master branch.
+
+*image PR_new
+*image pr
+*image merged
+
+
+Head back on your terminal, checkout from the feature branch into the master, and pull down the latest changes using `git pull`.
+Once your code changes appear in master branch - Jenkins will do its job and save all the files (build artifacts) to /var/lib/jenkins/jobs/ansible/builds/<build_number>/archive/ directory on Jenkins-Ansible server.
+
+## Run first Ansible test
+Now, it's time to execute ansible-playbook command and verify if your playbook actually works:
+
+`ansible-playbook -i /var/lib/jenkins/jobs/ansible/builds/<build-number>/archive/inventory/dev.yml /var/lib/jenkins/jobs/ansible/builds/<build-number>/archive/playbooks/common.yml`
+
+
+You can go to each of the servers and check if wireshark has been installed by running which wireshark or wireshark --version
+
+
+
+Your updated with Ansible architecture now looks like this:
+
+
+```
+$ ansible-playbook -i /var/lib/jenkins/jobs/ansible/builds/8/archive/inventory/dev.yml /var/lib/jenkins/jobs/ansible/builds/8/archive/
+playbooks/common.yml
+[WARNING]: Unable to parse /var/lib/jenkins/jobs/ansible/builds/8/archive/inventory/dev.yml as an inventory source
+[WARNING]: No inventory was parsed, only implicit localhost is available
+[WARNING]: provided hosts list is empty, only localhost is available. Note that the implicit localhost does not match 'all'
+[WARNING]: Could not match supplied host pattern, ignoring: webservers
+[WARNING]: Could not match supplied host pattern, ignoring: nfs
+[WARNING]: Could not match supplied host pattern, ignoring: db
+PLAY [update web, nfs and db servers] **********************************************************************************************************************
+skipping: no hosts matched
+[WARNING]: Could not match supplied host pattern, ignoring: lb
+PLAY [update Nginx LB server] ******************************************************************************************************************************
+skipping: no hosts matched
+PLAY RECAP ************************************************************************************************************************************************
+```
+
+*image ansible archi
+
