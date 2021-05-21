@@ -10,7 +10,7 @@
       name: wireshark
       state: latest
 
-- name: update LB server
+- name: update Nginx LB server
   hosts: lb
   remote_user: araflyayinde
   become: yes
