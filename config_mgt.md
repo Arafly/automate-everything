@@ -74,3 +74,74 @@ README.md  assets  config_mgt.md
 Now our setup will look like this:
 
 ![](https://github.com/Arafly/automate-everything/blob/master/assets/jenkins_ansible.png)
+
+## Ansible Development
+- In your  GitHub repository, create a new branch that will be used for development of a new feature (mine is ansible_integration)
+
+- Checkout the newly created feature branch to your local machine to start building your code and directory structure
+- Create a directory and name it *playbooks* - it will be used to store all your playbook files. Also Within the playbooks folder, create your first playbook, and name it *common.yml*
+- Create a directory and name it *inventory* - it will be used to keep your hosts organised. Within the inventory folder, create an inventory file (use .ini format) for each environment (Development, Staging Testing and Production) dev, staging, uat, and prod respectively.
+
+> Establish an ssh connection to each ip addresses grouped in the inventory file
+
+### Set up an Ansible Inventory
+An Ansible inventory file defines the hosts and groups of hosts upon which commands, modules, and tasks in a playbook operate. It is important to have a way to organize our hosts in such an Inventory.
+
+Below inventory structure in the inventory/dev file to start configuring your development servers. *Ensure to replace the IP addresses according to your own setup*.
+
+Update your inventory/dev.yml file with this snippet of code:
+
+```
+[nfs]
+<NFS-Server-Private-IP-Address> ansible_ssh_user='ec2-user'
+
+[webservers]
+<Web-Server1-Private-IP-Address> ansible_ssh_user='ec2-user'
+<Web-Server2-Private-IP-Address> ansible_ssh_user='ec2-user'
+
+[db]
+<Database-Private-IP-Address> ansible_ssh_user='ec2-user' 
+
+[lb]
+<Load-Balancer-Private-IP-Address> ansible_ssh_user='ubuntu'
+```
+
+### Create a Playbook
+It is time to start giving Ansible the instructions on what you needs to be performed on all servers listed in inventory/dev.
+
+Update your playbooks/common.yml file with following code:
+
+```
+---
+- name: update web, nfs and db servers
+  hosts: webservers, nfs, db
+  remote_user: ec2-user
+  become: yes
+  become_user: root
+  tasks:
+  - name: ensure wireshark is at the latest version
+    yum:
+      name: wireshark
+      state: latest
+
+- name: update LB server
+  hosts: lb
+  remote_user: ubuntu
+  become: yes
+  become_user: root
+  tasks:
+  - name: ensure wireshark is at the latest version
+    apt:
+      name: wireshark
+      state: latest
+```
+
+Examine the code above and try to make sense out of it. This playbook is divided into two parts, each of them is intended to perform the same task: install wireshark utility (or make sure it is updated to the latest version) on your RHEL 8 and Ubuntu servers. It uses root user to perform this task and respective package manager: yum for RHEL 8 and apt for Ubuntu.
+
+Feel free to update this playbook with following tasks:
+
+Create a directory and a file inside it
+Change timezone on all servers
+Run some shell script
+…
+For a better understanding of Ansible playbooks - watch this video from RedHat and read this article.
