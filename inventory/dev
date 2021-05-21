@@ -1,0 +1,12 @@
+[nfs]
+34.105.245.167 ansible_ssh_user='araflyayinde'
+
+[webservers]
+34.105.163.196 ansible_ssh_user='araflyayinde'
+35.242.128.108 ansible_ssh_user='araflyayinde'
+
+[db]
+34.145.122.179 ansible_ssh_user='araflyayinde'
+
+[lb]
+34.105.133.81 ansible_ssh_user='araflyayinde'
