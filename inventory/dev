@@ -1,12 +1,33 @@
 [nfs]
-34.105.245.167 ansible_ssh_user='araflyayinde'
+file-storage ansible_host=34.105.245.167 ansible_ssh_user='araflyayinde'
 
 [webservers]
-34.105.163.196 ansible_ssh_user='araflyayinde'
-35.242.128.108 ansible_ssh_user='araflyayinde'
+webserver1 ansible_host=34.105.163.196 ansible_ssh_user='araflyayinde'
+webserver2 ansible_host=35.242.128.108 ansible_ssh_user='araflyayinde'
 
 [db]
-34.145.122.179 ansible_ssh_user='araflyayinde'
+mysql ansible_host=34.145.122.179 ansible_ssh_user='araflyayinde'
 
 [lb]
-34.105.133.81 ansible_ssh_user='araflyayinde'
+nginx ansible_host=34.105.133.81 ansible_ssh_user='araflyayinde'
+
+[centos:children]
+nfs
+webservers
+
+[ubuntu:children]
+lb
+db
+
+[pr-11servers]
+file-storage ansible_host=34.105.245.167
+webserver1 ansible_host=34.105.163.196
+webserver2 ansible_host=35.242.128.108
+mysql ansible_host=34.145.122.179 
+nginx ansible_host=34.105.133.81 
+
+[pr-11servers:vars]
+ansible_ssh_user='araflyayinde'
+
+
+

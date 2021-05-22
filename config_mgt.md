@@ -155,9 +155,11 @@ git commit -m "commit message"
 - Create a Pull request (PR)
 Wear a hat of another developer for a second, and act as a reviewer. If the reviewer is happy with your new feature development, merge the code to the master branch.
 
-*image PR_new
-*image pr
-*image merged
+![](https://github.com/Arafly/automate-everything/blob/master/assets/PR_new.PNG)
+
+![](https://github.com/Arafly/automate-everything/blob/master/assets/pr.PNG)
+
+![](https://github.com/Arafly/automate-everything/blob/master/assets/merge_pr.PNG)
 
 
 Head back on your terminal, checkout from the feature branch into the master, and pull down the latest changes using `git pull`.
@@ -168,13 +170,7 @@ Now, it's time to execute ansible-playbook command and verify if your playbook a
 
 `ansible-playbook -i /var/lib/jenkins/jobs/ansible/builds/<build-number>/archive/inventory/dev.yml /var/lib/jenkins/jobs/ansible/builds/<build-number>/archive/playbooks/common.yml`
 
-
-You can go to each of the servers and check if wireshark has been installed by running which wireshark or wireshark --version
-
-
-
-Your updated with Ansible architecture now looks like this:
-
+When I ran the above command, I got the error message below. 
 
 ```
 $ ansible-playbook -i /var/lib/jenkins/jobs/ansible/builds/8/archive/inventory/dev.yml /var/lib/jenkins/jobs/ansible/builds/8/archive/
@@ -193,5 +189,279 @@ skipping: no hosts matched
 PLAY RECAP ************************************************************************************************************************************************
 ```
 
-*image ansible archi
+### Creating a Custom Inventory File
+
+Upon installation, Ansible creates an inventory file that is typically located at /etc/ansible/hosts. This is the default location used by Ansible when a custom inventory file is not provided with the -i option, during a playbook or command execution.
+
+Even though you can use this file without problems, using per-project inventory files is a good practice to avoid mixing servers when executing commands and playbooks. 
+
+To get started, access your home folder and create a new directory to hold your Ansible files:
+
+```
+cd ~
+mkdir ansible
+```
+ 
+Move to that directory and open a new inventory file using your text editor of choice. Here, we’ll use nano:
+
+```
+cd ansible
+nano inventory
+```
+
+Update your inventory file with the list of remote host you're targeting i.e lb, webservers, db
+
+- Setting Up Host Aliases
+We'd use aliases to name servers in a way that facilitates referencing those servers later, when running commands and playbooks. And also to make it more friendly instead of seeing bunch of ugly ip addresses.
+
+To use an alias, include a variable named *ansible_host* after the alias name, containing the corresponding IP address or hostname of the server that should respond to that alias.
+
+```
+[nfs]
+file-storage ansible_host=34.105.245.167 ansible_ssh_user='araflyayinde'
+
+[webservers]
+webserver1 ansible_host=34.105.163.196 ansible_ssh_user='araflyayinde'
+webserver2 ansible_host=35.242.128.108 ansible_ssh_user='araflyayinde'
+
+[db]
+mysql ansible_host=34.145.122.179 ansible_ssh_user='araflyayinde'
+
+[lb]
+nginx ansible_host=34.105.133.81 ansible_ssh_user='araflyayinde'
+```
+
+Now run the follwing command to list out your inventory:
+
+`$ ansible-inventory -i inventory --list`
+
+``
+
+```
+Output
+
+{
+    "_meta": {
+        "hostvars": {
+            "file-storage": {
+                "ansible_host": "34.105.245.167",
+                "ansible_ssh_user": "araflyayinde"
+            },
+            "mysql": {
+                "ansible_host": "34.145.122.179",
+                "ansible_ssh_user": "araflyayinde"
+            },
+            "nginx": {
+                "ansible_host": "34.105.133.81",
+                "ansible_ssh_user": "araflyayinde"
+            },
+            "webserver1": {
+                "ansible_host": "34.105.163.196",
+                "ansible_ssh_user": "araflyayinde"
+            },
+            "webserver2": {
+                "ansible_host": "35.242.128.108",
+                "ansible_ssh_user": "araflyayinde"
+            }
+        }
+    },
+    "all": {
+        "children": [
+            "db",
+            "lb",
+            "nfs",
+            "ungrouped",
+            "webservers"
+        ]
+    },
+   "db": {
+        "hosts": [
+            "mysql"
+        ]
+    },
+    "lb": {
+        "hosts": [
+            "nginx"
+        ]
+    },
+    "nfs": {
+        "hosts": [
+            "file-storage"
+        ]
+    },
+    "webservers": {
+        "hosts": [
+            "webserver1",
+            "webserver2"
+        ]
+    }
+}
+```
+
+- Run Ansible commands with the custom inventory file, use the -i option as follows:
+
+`ansible all -i inventory -m ping`
+ 
+This would execute the ping module on all hosts listed in your custom inventory file.
+
+```
+Output
+
+mysql | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+file-storage | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/libexec/platform-python"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+webserver1 | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/libexec/platform-python"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+webserver2 | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/libexec/platform-python"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+nginx | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+```
+ 
+> If you obsserve, in the inventory file, there's ansible_ssh_host repeated on all five servers. DRY Principle (Don't Repeat Yourself) would frown at this, exactly like this:
+
+*image meme
+
+So, what we have to do is further regroup our hosts and append the single ssh_user to them: 
+
+
+```
+[pr-11servers]
+file-storage ansible_host=34.105.245.167
+webserver1 ansible_host=34.105.163.196
+webserver2 ansible_host=35.242.128.108
+mysql ansible_host=34.145.122.179 
+nginx ansible_host=34.105.133.81 
+
+[pr-11servers:vars]
+ansible_ssh_user='araflyayinde'
+
+```
+
+Now we can still list and ping the remote servers;
+
+`$ ansible-inventory -i inventory --list`
+
+```
+Output
+
+{
+    "_meta": {
+        "hostvars": {
+            "file-storage": {
+                "ansible_host": "34.105.245.167",
+                "ansible_ssh_user": "araflyayinde"
+            },
+            "mysql": {
+                "ansible_host": "34.145.122.179",
+                "ansible_ssh_user": "araflyayinde"
+            },
+            "nginx": {
+                "ansible_host": "34.105.133.81",
+                "ansible_ssh_user": "araflyayinde"
+            },
+            "webserver1": {
+                "ansible_host": "34.105.163.196",
+                "ansible_ssh_user": "araflyayinde"
+            },
+            "webserver2": {
+                "ansible_host": "35.242.128.108",
+                "ansible_ssh_user": "araflyayinde"
+            }
+        }
+    },
+    "all": {
+        "children": [
+            "pr_11servers",
+            "ungrouped"
+        ]
+    },
+    "pr_11servers": {
+        "hosts": [
+            "file-storage",
+            "mysql",
+            "nginx",
+            "webserver1",
+                        "webserver2"
+        ]
+    }
+}
+```
+
+`$ ansible all -i inventory -m ping`
+
+```
+Output
+
+mysql | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+file-storage | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/libexec/platform-python"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+webserver2 | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/libexec/platform-python"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+webserver1 | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/libexec/platform-python"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+nginx | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+```
+
+
+You can go to each of the servers and check if wireshark has been installed by running which wireshark or wireshark --version
+
+
+
+Your updated with Ansible architecture now looks like this:
+
+![](https://github.com/Arafly/automate-everything/blob/master/assets/ansible_architecture.png)
 
