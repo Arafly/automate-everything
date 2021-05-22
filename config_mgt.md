@@ -165,50 +165,6 @@ Wear a hat of another developer for a second, and act as a reviewer. If the revi
 Head back on your terminal, checkout from the feature branch into the master, and pull down the latest changes using `git pull`.
 Once your code changes appear in master branch - Jenkins will do its job and save all the files (build artifacts) to /var/lib/jenkins/jobs/ansible/builds/<build_number>/archive/ directory on Jenkins-Ansible server.
 
-## Run first Ansible test
-Now, it's time to execute ansible-playbook command and verify if your playbook actually works:
-
-`ansible-playbook -i /var/lib/jenkins/jobs/ansible/builds/<build-number>/archive/inventory/dev.yml /var/lib/jenkins/jobs/ansible/builds/<build-number>/archive/playbooks/common.yml`
-
-When I ran the above command, I got the error message below. 
-
-```
-$ ansible-playbook -i /var/lib/jenkins/jobs/ansible/builds/8/archive/inventory/dev.yml /var/lib/jenkins/jobs/ansible/builds/8/archive/
-playbooks/common.yml
-[WARNING]: Unable to parse /var/lib/jenkins/jobs/ansible/builds/8/archive/inventory/dev.yml as an inventory source
-[WARNING]: No inventory was parsed, only implicit localhost is available
-[WARNING]: provided hosts list is empty, only localhost is available. Note that the implicit localhost does not match 'all'
-[WARNING]: Could not match supplied host pattern, ignoring: webservers
-[WARNING]: Could not match supplied host pattern, ignoring: nfs
-[WARNING]: Could not match supplied host pattern, ignoring: db
-PLAY [update web, nfs and db servers] **********************************************************************************************************************
-skipping: no hosts matched
-[WARNING]: Could not match supplied host pattern, ignoring: lb
-PLAY [update Nginx LB server] ******************************************************************************************************************************
-skipping: no hosts matched
-PLAY RECAP ************************************************************************************************************************************************
-```
-
-### Creating a Custom Inventory File
-
-Upon installation, Ansible creates an inventory file that is typically located at /etc/ansible/hosts. This is the default location used by Ansible when a custom inventory file is not provided with the -i option, during a playbook or command execution.
-
-Even though you can use this file without problems, using per-project inventory files is a good practice to avoid mixing servers when executing commands and playbooks. 
-
-To get started, access your home folder and create a new directory to hold your Ansible files:
-
-```
-cd ~
-mkdir ansible
-```
- 
-Move to that directory and open a new inventory file using your text editor of choice. Here, we’ll use nano:
-
-```
-cd ansible
-nano inventory
-```
-
 Update your inventory file with the list of remote host you're targeting i.e lb, webservers, db
 
 - Setting Up Host Aliases
@@ -233,7 +189,7 @@ nginx ansible_host=34.105.133.81 ansible_ssh_user='araflyayinde'
 
 Now run the follwing command to list out your inventory:
 
-`$ ansible-inventory -i inventory --list`
+`$ ansible-inventory -i /var/lib/jenkins/jobs/ansible/builds/9/archive/inventory/dev --list`
 
 ``
 
@@ -298,9 +254,9 @@ Output
 }
 ```
 
-- Run Ansible commands with the custom inventory file, use the -i option as follows:
+- Run a ping to test connection to all our remote hosts
 
-`ansible all -i inventory -m ping`
+`$ ansible all -i /var/lib/jenkins/jobs/ansible/builds/9/archive/inventory/dev -m ping`
  
 This would execute the ping module on all hosts listed in your custom inventory file.
 
@@ -343,13 +299,12 @@ nginx | SUCCESS => {
     "ping": "pong"
 }
 ```
- 
-> If you obsserve, in the inventory file, there's ansible_ssh_host repeated on all five servers. DRY Principle (Don't Repeat Yourself) would frown at this, exactly like this:
 
-*image meme
+> If you observe, in the inventory file, there's ansible_ssh_host repeated on all five servers. DRY Principle (Don't Repeat Yourself) would frown at this, exactly like this:
+
+![](https://github.com/Arafly/automate-everything/blob/master/assets/photo_2021-05-22_18-06-46.jpg)
 
 So, what we have to do is further regroup our hosts and append the single ssh_user to them: 
-
 
 ```
 [pr-11servers]
@@ -364,104 +319,71 @@ ansible_ssh_user='araflyayinde'
 
 ```
 
-Now we can still list and ping the remote servers;
-
-`$ ansible-inventory -i inventory --list`
+- Update your playbooks/common.yml file with following code:
 
 ```
-Output
+---
+- name: update web, nfs and db servers
+  hosts: webservers, nfs, db
+  remote_user: ec2-user
+  become: yes
+  become_user: root
+  tasks:
+  - name: ensure wireshark is at the latest version
+    yum:
+      name: wireshark
+      state: latest
 
-{
-    "_meta": {
-        "hostvars": {
-            "file-storage": {
-                "ansible_host": "34.105.245.167",
-                "ansible_ssh_user": "araflyayinde"
-            },
-            "mysql": {
-                "ansible_host": "34.145.122.179",
-                "ansible_ssh_user": "araflyayinde"
-            },
-            "nginx": {
-                "ansible_host": "34.105.133.81",
-                "ansible_ssh_user": "araflyayinde"
-            },
-            "webserver1": {
-                "ansible_host": "34.105.163.196",
-                "ansible_ssh_user": "araflyayinde"
-            },
-            "webserver2": {
-                "ansible_host": "35.242.128.108",
-                "ansible_ssh_user": "araflyayinde"
-            }
-        }
-    },
-    "all": {
-        "children": [
-            "pr_11servers",
-            "ungrouped"
-        ]
-    },
-    "pr_11servers": {
-        "hosts": [
-            "file-storage",
-            "mysql",
-            "nginx",
-            "webserver1",
-                        "webserver2"
-        ]
-    }
-}
+- name: update LB server
+  hosts: lb
+  remote_user: ubuntu
+  become: yes
+  become_user: root
+  tasks:
+  - name: ensure wireshark is at the latest version
+    apt:
+      name: wireshark
+      state: latest
 ```
 
-`$ ansible all -i inventory -m ping`
+## Run first Ansible test
+Now, it's time to execute ansible-playbook command and verify if your playbook actually works:
+
+`ansible-playbook -i /var/lib/jenkins/jobs/ansible/builds/<build-number>/archive/inventory/dev.yml /var/lib/jenkins/jobs/ansible/builds/<build-number>/archive/playbooks/common.yml`
+
+When I ran the above command, I got the error message below. 
 
 ```
-Output
-
-mysql | SUCCESS => {
-    "ansible_facts": {
-        "discovered_interpreter_python": "/usr/bin/python3"
-    },
-    "changed": false,
-    "ping": "pong"
-}
-file-storage | SUCCESS => {
-    "ansible_facts": {
-        "discovered_interpreter_python": "/usr/libexec/platform-python"
-    },
-    "changed": false,
-    "ping": "pong"
-}
-webserver2 | SUCCESS => {
-    "ansible_facts": {
-        "discovered_interpreter_python": "/usr/libexec/platform-python"
-    },
-    "changed": false,
-    "ping": "pong"
-}
-webserver1 | SUCCESS => {
-    "ansible_facts": {
-        "discovered_interpreter_python": "/usr/libexec/platform-python"
-    },
-    "changed": false,
-    "ping": "pong"
-}
-nginx | SUCCESS => {
-    "ansible_facts": {
-        "discovered_interpreter_python": "/usr/bin/python3"
-    },
-    "changed": false,
-    "ping": "pong"
-}
+$ ansible-playbook -i /var/lib/jenkins/jobs/ansible/builds/9/archive/inventory/dev /var/lib/jenkins/jobs/ansible/builds/9/archive/playbooks/common.yml
+PLAY [update web, nfs and db servers] *****************************************************************************************************************************
+TASK [Gathering Facts] ********************************************************************************************************************************************
+ok: [webserver1]
+ok: [webserver2]
+ok: [file-storage]
+ok: [mysql]
+TASK [ensure wireshark is at the latest version] ******************************************************************************************************************
+ok: [mysql]
+ok: [file-storage]
+ok: [webserver1]
+ok: [webserver2]
+PLAY [update Nginx LB server] *************************************************************************************************************************************
+TASK [Gathering Facts] ********************************************************************************************************************************************
+ok: [nginx]
+TASK [ensure wireshark is at the latest version] ******************************************************************************************************************
+ok: [nginx]
+PLAY RECAP ********************************************************************************************************************************************************
+file-storage               : ok=2    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+mysql                      : ok=2    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+nginx                      : ok=2    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+webserver1                 : ok=2    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+webserver2                 : ok=2    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
 ```
 
-
-You can go to each of the servers and check if wireshark has been installed by running which wireshark or wireshark --version
-
-
+You can go to each of the servers and check if wireshark has been installed by running `which wireshark` or `wireshark --version`
 
 Your updated with Ansible architecture now looks like this:
 
 ![](https://github.com/Arafly/automate-everything/blob/master/assets/ansible_architecture.png)
+
+### **Congratulations!**
 
