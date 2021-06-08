@@ -1,0 +1,32 @@
+---
+- name: update web, nfs and db servers
+  hosts: centos
+  remote_user: araflyayinde
+  become: yes
+  become_user: root
+  tasks:
+  - name: update yum package
+    yum:
+      name: "*"
+      state: latest
+      update_cache: yes
+  - name: ensure wireshark is at the latest version
+    yum:
+      name: wireshark
+      state: latest
+
+- name: update Nginx LB server
+  hosts: ubuntu
+  remote_user: araflyayinde
+  become: yes
+  become_user: root
+  tasks:
+  - name: update yum package
+    yum:
+      name: "*"
+      state: latest
+      update_cache: yes
+  - name: ensure wireshark is at the latest version
+    apt:
+      name: wireshark
+      state: latest
