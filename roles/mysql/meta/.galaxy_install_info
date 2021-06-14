@@ -1,2 +1,6 @@
+<<<<<<< HEAD
 install_date: Tue Jun  8 00:20:22 2021
+=======
+install_date: Sat Jun 12 16:37:42 2021
+>>>>>>> loadbalancer & webserver ansible roles
 version: 3.3.1
