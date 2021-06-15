@@ -1,4 +1,4 @@
 [uat_webservers]
-uat-1 ansible_host=35.230.121.198 ansible_ssh_user='araflyayinde'
-uat-2 ansible_host=104.198.102.238 ansible_ssh_user='araflyayinde'
+uat-1 ansible_host=34.82.171.196 ansible_ssh_user='araflyayinde'
+uat-2 ansible_host=35.247.1.27 ansible_ssh_user='araflyayinde'
 
